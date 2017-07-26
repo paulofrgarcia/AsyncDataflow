@@ -1,0 +1,29 @@
+\section{PDF critical path analysis}\label{sec:pdf}
+
+
+As previously mentioned, the timing analysis of synchronous dataflow is predicated on predictable token consumption/production rates at discrete, globally synchronised points in time. This discrete scheduling may be a global clock transition in hardware implementations or a scheduling time slice in software implementations. On asynchronous dataflow, this discrete abstraction must be abandoned: absolute continuous time must instead be adopted. This is true even in Globally Asynchronous Locally Synchronous (GALS) hardware implementations: even though each actor operates under its own (discrete) clock, clock frequencies may be completely unrelated in frequency and phase. The goal of PDF analysis is to obtain a token throughput timing profile in absolute time, under unpredictable token consumption/production rates. This is done through network profiling, collecting runtime statistics about each actor's behaviour.
+
+\subsection{Single Input Single Output Actors}
+
+\begin{figure}[tb]
+  \centering
+  \includegraphics[width=1\columnwidth]{img/example1.png}
+  \caption{Accumulated energy consumption for the baseline (no approximation) and dynamic approximations, with three different KL divergence thresholds.}
+  \label{fig:example1}
+\end{figure}
+
+
+
+
+For the simplest possible dynamic asynchronous actor, with one input and one output port, we monitor each action firing, how many tokens are consumed and produced, and how long it takes between token consumption and production (i.e., action latency). Fig. \ref{fig:example1} depicts an example of such profiling, for different token throughput and action latencies, and examples of PDFs for each metric.
+
+
+
+\par In order to model actors' behaviour in absolute continuous time, 
+
+\begin{itemize}
+\item each actor latency (avg of actions) as a PDF
+\item effect of pipeline analysis of PDF
+\item effect of feedback loops analysis of PDFs
+\end{itemize}
+

@@ -1,0 +1,48 @@
+
+
+
+
+
+\section{Introduction}
+
+Abstractions are one of the fundamental aspects of computing. The advent of high level languages \cite{} raised the level of abstraction from assembly programming and brought two main advantages to programmers: portability and productivity. No longer bound by processor-specific assembly instructions, code could be easily ported across different platforms, as long as a compiler were available. Processor agnosticism meant programmers could think in terms of the problem, rather than concerning themselves with architecture-specific details (``does this instruction affect the condition codes?"). It wasn't long until compilers could produce more efficient code than human programmers \cite{}, by optimizing at a higher level than assembly code: another advantage of abstractions.
+\par Consider a contemporary high level language, e.g., Java \cite{}. A Java application can be pre-compiled on a completely different machine than the one on which it will run. The Java Virtual Machine (JVM) abstracts the underlying systems from the application programmer: both hardware and software. The JVM programmer, however, enjoys fewer abstractions: the JVM must be compiled targetting a specific Operating System (OS) and processor (e.g., IA32 \cite{}). However, it is still abstracted from many hardware details: particular micro-architectures (e.g., Intel i5 or i7 \cite{}) are invisible to the JVM, since these are abstracted by the OS. These abstractions are tried and tested on static, i.e., unmodifiable hardware: Application Specific Integrated Circuits (ASIC). Notice that this software stack is common even in resource constrained embedded systems, most of which run an embedded OS - typically a Linux kernel variant \cite{} - and that \textit{all} layers can be modified after system deployment; it is straightforward to write and compile code \textit{in situ}, including OS kernel modules \cite{}.
+\par Now consider the growing deployment of systems based on Field Programmable Gate Arrays (FPGAs) \cite{}, often used to implement complete System-on-Chip (SoC) solutions \cite{}. Parameterisable processors \cite{}, libraries of Intellectual Property (IP) blocks \cite{} and custom components developed in Hardware Description Languages (HDL) \cite{} enable system designers to fine-tune their platform for any given application \cite{}; at the cost of added software complexity. Modern FPGAs are capable of Dynamic Partial Reconfiguration (DPR) \cite{}: chip partitions can be reconfigured at runtime, in order to obtain power/performance benefits \cite{}, or merely to save on-chip space. This technology will likely improve, enabling more and more fine-grained reconfiguration capabilities \cite{}.
+\par What happens when hardware reconfiguration reaches the same level of configurability and programmability that software currently enjoys? Certainly one can envision several advantages. The hypothetical Java application could reconfigure hardware to deploy an accelerator: a custom circuit that performs computations in shorter time or consuming less power. But this request must certainly go through the JVM and through the OS, since only at the OS layer are hardware details known: what the interfaces to communicate with the accelerator are. This breaks, to a certain degree, the abstraction model; to the OS, the underlying layer - hardware - which it's supposed to abstract, is modified by an upper layer - application -. This accelerator could be used to snoop and modify data in memory buses, giving the application read/write access to memory locations it shouldn't access: nullifying the spatial separation the OS is supposed to enforce \cite{}.
+\par Throughout the remainder of this paper, we survey the state of the art in the different aspects of programming abstractions for reconfigurable hardware. We begin by revising abstractions and hierarchies in static hardware in Section \ref{sec:static}. These are described from the \textit{system} perspective: the purpose and abstractions offered by each software stack layer; and from the \textit{design} perspective, namely programmer concerns and the associated programming language paradigms. We continue in Section \ref{sec:codesign} by reviewing hardware/software co-design for configurable (i.e., at design time) hardware, showing the current techniques, tools and languages for mixed design and their impact on software. In Section \ref{sec:runtime}, we survey the state of the art in reconfigurable co-design, where we present current work on runtime systems and associated design paradigms for runtime reconfiguration and their implications. In Section \ref{sec:future}, we describe what we believe is the inexorable future of completely reconfigurable systems, based on current research directions.
+\par To the best of our knowledge, this is the first paper to describe a complete analysis of research and roadmaps in programming abstractions in reconfigurable hardware. 
+
+
+\section{Programming Abstractions in Static Hardware}\label{sec:static}
+
+The conventional view on \textit{programming abstractions} -the level at which software is designed, and which concerns afflict the programmer- is a hierarchical one, depicted in Fig. \ref{fig:hierarchy}. At the highest level, \textit{cloud computing}: software is designed at a level where the both the underlying Operating System (OS) and hardware platform are invisible; even the geographical location of the machines that run such code, or the number of machines concurrently running such code, is unknown. Software is encapsulated with and within services \cite{} and Application Programming Interfaces (APIs) \cite{} and managed by the underlying software stack (encompassing Virtual Machines, Hypervisors, OSs, Middlewares, etc.) at runtime. Examples of languages for such an abstraction level are PHP \cite{} and JavaScript \ref{}.
+\par One step down the hierarchy, there is interpreted (sometimes called managed \cite{}) code \cite{}. Software runs on top of interpreters or virtual machines, allowing complete portability across different OSs and architectures. Like cloud computing, managed code is not aware of the underlying OS and hardware platform; however, it is more self-contained (i.e., less reliant on APIs and services) than cloud software. Examples of languages for this layer are Java \cite{} and C\# \cite{}.
+\par The next step is native application code. This code is compiled for a particular OS and for a particular architecture (e.g., ARM, IA64), but is unaware of particular micro-architectural details (e.g., how the memory system is organized). Examples of languages for this layer are Haskell \cite{} and C/C++ \cite{}. This layer implements application, i.e., user-interface software, as well as runtime systems to support the upper layer (e.g., JVM \cite{} and .NET \cite{}) and user-level OS components.
+\par At the system software layer - encompassing OSs, Virtual Machine Monitors (VMM, or Hypervisors), middleware - few abstractions exist. Software is keenly aware of all underlying hardware details: from memory system (how caches are organized, whether they're virtually or physically addressed, how virtual memory is managed) to 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

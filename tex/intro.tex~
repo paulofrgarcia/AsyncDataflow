@@ -1,0 +1,24 @@
+\section{Introduction}
+
+The dataflow model(s) of computation is a paradigm that can be used to implement, represent and reason about myriad processes. Dataflow models processes as concurrent computational blocks (actors) communicating through data (tokens) sent across point-to-point channels. This paradigm is applicable to hardware pipelines, parallel software, distributed systems, etc.; and has been used to implement a broad range of solutions, using one of the many dataflow sub-models, depending on the nature of the application. 
+\par The different models of dataflow differ in two key areas: synchronicity and token throughput. \textit{Synchronicity} refers to the timing semantics of different actors: are their actions scheduled according to a global time frame, which can be predicted statically? Or are execution semantics unpredictably variable throughout runtime? \textit{Token throughput} refers to token consumption and production rates: do actors consume/produce a fixed number of tokens per action (or cyclic sequences of tokens), which can be used to reason about global throughput? Or is the throughput unpredictable as well? 
+\par There is an inversely proportional relation between predictability and applicability. The simplest models, which exhibit highly predictable execution semantics, can be used to design and represent equally simple systems: e.g., synchronous state-less hardware. The most complex model -dynamic asynchronous- can be used to design and represent virtually any system at any scale (e.g., distributed computing), at the cost of predictability: i.e., it is more complex to reason about its execution semantics, namely timing.
+\par Timing analysis, however, is of paramount importance to \textit{optimisation functions}: manual or automated methods that consume a dataflow network and produce and optimised version. Re-designing or refactoring a dataflow system to optimise a particular metric (e.g., performance, power consumption) requires trustworthy assumptions about the behaviour of that system. State of the art timing analysis methodologies, however, are based on formal semantics that rely on static token throughput and synchronisation. 
+\par In this paper, we investigate the timing analysis of dynamic asynchronous dataflow and its application to optimisation functions. We abandon the notion of precise timing knowledge, and instead build statistical timing models that can guide optimisation functions. Specifically, this paper offers the following contributions:
+
+\begin{itemize}
+\item We identify and discuss the limitations of state of the art timing analysis techniques for asynchronous dynamic dataflow, and how these limitations prevent optimisations across a broad range of dataflow implementations.
+\item We present a methodology for statistical timing analysis based on Probablity Density Functions (PDFs), which can be applied to asynchronous dynamic dataflow.
+\item We present a methodology that applies PDF analysis to dataflow optimisations, namely scheduling strategies for software implementations and clock gating strategies for hardware implementations.
+\end{itemize}
+
+\par The remainder of this paper is organized as follow: in Section \ref{sec:back}, we revise the different types of dataflow models and the state of the art in dataflow timing analysis, and highlight the current limitations of applying such techniques to asynchronous dynamic dataflow. In Section \ref{sec:pdf}, we present our methodology for statistical timing analysis of asynchronous dynamic dataflow. In Section \ref{sec:sched}, we describe how our timing analysis can be applied to scheduling optimisations of dataflow software implementations, and in Section \ref{sec:gate} we describe how it can be applied to clock gating optimisations of dataflow hardware implementations. In Section \ref{sec:exp}, we evaluate our approaches on a suite of dataflow applications, implemented on CPU and FPGA. Finally, we present our conclusions and identify future work in Section \ref{sec:conc}. 
+
+
+
+
+
+
+
+
+dwgdsgsgd \cite{hormati2008optimus}

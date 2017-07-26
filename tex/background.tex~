@@ -1,0 +1,13 @@
+\section{Background and Related Work}\label{sec:back}
+
+In order to have this paper self-contained, we review three dataflow models: static synchronous, cyclo-static synchronous, and dynamic asynchronous (the interested reader may refer to \cite{} for a more detailed discussion of other models such as cyclo-static asynchronous). Although other model variants exist, we focus our expos\'{e} on these three types, which suffice to illustrate the key aspects of interest in this paper. 
+
+
+
+
+\begin{itemize}
+\item different types of dataflow, focusing on dynamic asynchronous
+\item related work in timing estimation, token critical path analysis
+\item examples of why it doesn't work for dynamic asynchronous
+\end{itemize}
+

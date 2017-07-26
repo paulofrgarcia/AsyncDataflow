@@ -1,0 +1,156 @@
+\section{Hardware Software Co-Design}\label{sec:codesign}
+
+
+\subsection{High Level Synthesis}
+
+High-Level Synthesis (HLS) promises to boost hardware design productivity into software-like levels, ending the long development and verification processes typically associated with Register Transfer Level (RTL) design. The momentum behind the HLS movement is primarily fueled by two aspects: on one hand, the hardware community desires to increase productivity and ensure design correctness in order to guarantee the time-to-market of complex SoCs keeps up with Moore's law. On the other hand, the software community, lacking RTL-savyy, increasingly adopts FPGAs in fields as diverse as high performance computing or image processing, and wishes to program them using established software languages/frameworks. The appearance of \textit{platform FPGAs}, which are essentially SoCs combining general-purpose processor(s) and/or other ``hard'' blocks with ``soft'' FPGA fabric, increased the demand for powerful HLS even further, thanks to opportunities for hardware-software co-design.
+\par Despite approximately three decades of HLS development, we are still far from the levels of productivity achieved in the software world. The HLS landscape, shaped by FPGA vendors' proprietary toolchains, third-party commercial toolchains and academic/open-source projects, is made up of more than forty different HLS frameworks, none of which has gained widespread adoption: Verilog and VHDL are still the \textit{de facto} development languages for FPGAs. The goal of this survey is to examine the reasons behind this and point out future research directions for HLS.
+
+\par HLS research has been previously summarized from different perspectives: \cite{martin2009high}, \cite{7368920}, \cite{trimberger2015three}, \cite{meeus2012overview} and \cite{5737854} have described the historical evolution of HLS tools, primarily focusing on industry adoption. \cite{Zhang2000199}, \cite{compton2002reconfigurable} and \cite{cardoso2010compiling} focus on the dynamic-reconfiguration support of HLS tools. We summarize the field from a different perspective, filling a gap in the literature; namely \textit{HLS languages' abstractions}, focusing on the clash of hardware and software traditional views. 
+
+%\begin{itemize}
+%	\item how language expressiveness (e.g., monadic-based I/O advocated by functional languages HLS) fits hardware-specific challenges such as strict timing requirements;
+%	\item how interoperability between different languages is supported (especially with Verilog/VHDL, which are still essential for several design details);
+%	\item how datapath-oriented HLS copes with control-oriented hardware design;
+%	\item how Turing-completeness supported by languages designed for the Von Neumann model is achieved on dedicated hardware solutions;
+%	\item how languages support hardware-software co-design and runtime interaction.
+%\end{itemize}
+
+The diverse nature of HLS languages/toolchains (some are novel full-fledged languages such as Bluespec, others subsets of legacy languages such as C, and others are domain specific embedded languages, such as C$\lambda$ash) complicates this analysis; we treat each as comparable languages \textit{per se} when appropriate, and we make very fine distinctions in other cases. Different toolchains which use the same underlying language are also treated distinctly: throughout this manuscript, we use the terms \textit{language} and \textit{toolchain} interchangeably when referring to HLS.
+
+Hardware Description Languages (HDL), such as Verilog and VHDL, lack many of the features typically associated with high level languages. There is no complex type system: every signal is a bit array (integer types are merely placeholders for a specific bit width). There are very few syntactical constructs: the various loop and type constructs typically found in software make no sense. This is because HDLs specify the behavior, not as a sequential computation (where parallelism must be explicitly managed through threads/processes) but as a computation for every single moment in time (behavior at each clock cycle) where parallelism is implicit. Loop unrolling is seen as a compiler optimization in C, while in HDL, it is built into the language semantics: a loop that cannot be fully unrolled at design time will result in a synthesis error. This paradigm shift from temporal flexibility to temporal strictness is one of the main reasons software programmers struggle with HDLs, and one HLS tools attempt to abstract. 
+\par However, this temporal paradigm is one of the greatest strengths of HDLs and one of the weaknesses of HLS (we will elaborate on this in the following sections); HDLs can cope with complex timing requirements, such as refresh rates for DRAM memories, communication protocols, or circuit initialization procedures. When HLS languages fail to provide mechanisms to perform these procedures efficiently and clean interfaces to HDL code, there is little motivation for hardware engineers to adopt such a toolchain. This advents from the fact that many HLS languages are datapath-oriented, rather than control-oriented (HDLs are both).
+\par \textit{Clock} signals are arguably the most important signals in an FPGA design, and thus, they are explicitly stated in HDLs. Designers can distribute complex designs across asynchronous clock domains, perform clock gating for power reduction and keep an accurate record of elapsed time (every hardware designer has had to implement a clock cycles counter for some low-level communication protocol at one time). Most HLS languages, however, do not have an explicit clock signal. Either each language construct operates in one clock cycle or, as is the case in some dataflow languages, there is no programmer-visible concept of time. To the best of our knowledge, very few HLS toolchains are yet capable of handling multiple clock domains automatically, inserting appropriate synchronization logic (e.g., \cite{5694295}).
+
+\begin{table}
+\tbl{Imperative/OO HLS\label{table:C_HLS}}{
+\begin{tabular}{l c c c}
+
+Language & Source & & \\
+\hline
+
+SystemC & \cite{panda2001systemc} & & \\
+Handel-C & \cite{loo2002handel} & & \\
+OCAPI-XL & \cite{vanmeerbeeck2001hardware}& & \\
+Catapult-C & \cite{bollaert2008catapult} & & \\
+Vivado HLS & \cite{feist2012vivado} & & \\
+Impulse C & \cite{xu2010impulse} & & \\
+C-to-Silicon & \cite{Cadence} & & \\
+Synphony C & \cite{Synopsis} & & \\
+Cynthesizer & \cite{Cadence2} & & \\
+LegUp & \cite{canis2011legup} & & \\
+ASC & \cite{mencer2006asc} & & \\
+Altera C2H & \cite{nios2007c2h} & & \\
+CHiMPS & \cite{putnam2008chimps}& & \\
+ROCCC & \cite{villarreal2010designing} & & \\
+GAUT & \cite{coussy2010gaut} & & \\
+Trident & \cite{tripp2007trident} & & \\
+Altera SDK for OpenCL & \cite{settle2013high} & & \\
+Xilinx SDAccel & \cite{fifield2016optimizing} & & \\
+FCUDA & \cite{papakonstantinou2009fcuda} & & \\
+LIME & \cite{auerbach2010lime} & & \\
+KIWI & \cite{singh2008kiwi} & & \\
+DWARV & \cite{nane2012dwarv} & & \\
+Bambu & \cite{pilato2013bambu} & & \\
+Hercules & \cite{kavvadias2015source} & & \\
+
+\end{tabular}}
+\end{table}
+
+\subsubsection{Imperative Languages}
+
+C is the most familiar software language for hardware designers. Hence, it is not surprising that many HLS toolchains use C, and other similar imperative languages and Object-Oriented (OO) variants, as a foundation (although many software programmers would disagree C should be considered ''high level"). Table \ref{table:C_HLS} depicts imperative-based HLS toolchains. It is by no means complete, but suffices to grasp the ammount of effort invested in imperative languages to FPGA design.
+\par There are three main advantages to this flavour of HLS: \textit{familiarity, control} and \textit{co-design}. The familiar syntax allows programmers to express algorithms quickly, often re-using code. Tried and tested software applications can be migrated to hardware for acceleration. The sequential semantics of C-like languages, rich in loop and conditional constructs, lends itself well to the implementation of protocols and control operations. Since software and hardware are described in the same language, design space exploration strategies can be employed to meet design performance, power and area constraints, mapping an algorithm to CPU(s)/FPGA hybrid systems. This paradigm is especially favorable when targetting platform FPGAs; hence the extensive support offered by FPGA vendors (e.g., Xilinx vivado HLS and SDK).
+\par This paradigm is not without several drawbacks. It is notoriously difficult to explicitly express parallelism in imperative languages; it must typically be expressed through compiler directives (\textit{pragmas}) for loop unrolling, which rely on compiler optimizations. Granularity is an issue: most HLS compilations operate at the function granularity, which might force legacy software to be re-written in order to encapsulate hardware-destined and software-destined code separately. Timing is an issue, as it may be impossible to predict how many clock cycles a particular language construct will take to execute, depending on the HDL generation strategy. As these languages were built for Von Neumann machines (implying a large, shared memory space), many language features are not directly amenable to hardware synthesis (pointers and dynamic memory allocation are notorious examples). 
+
+
+
+
+
+
+\subsubsection{Functional Languages}
+
+Advocates for functional programming have developed several HLS functional flavours, either through new complete languages or through small languages embedded in consolidated ones such as Haskell. Table \ref{table:func_HLS} depicts an overview of functional languages targetting FPGAs.
+
+\pgcomment{advantages and problems}
+
+\begin{table}
+\tbl{Functional HLS\label{table:func_HLS}}{
+\begin{tabular}{l c c c}
+
+Language & & & \\
+\hline
+Clash & \cite{harmsen2012compiling} & & \\
+HML & \cite{li1995hml} & & \\
+ForSyDe & \cite{sander2009hardware} & & \\
+Lava & \cite{singh2004designing} & & \\
+PARO & \cite{hannig2008paro} & & \\
+Esterel & \cite{hammarberg2003development} & & \\
+MMAlpha & \cite{derrien2000interfacing} & & \\
+Verity & \cite{aguilar2014compiling} & & \\
+ReWire & \cite{Procter:2015:SDH:2808704.2754970} & & \\
+SAFL & \cite{sharp20045} & & \\
+Hume & \cite{serot2012harnessing} & & \\
+
+
+\end{tabular}}
+\end{table}
+
+
+
+\subsubsection{Domain Specific Languages}
+
+In an effort to avoid the challenges of synthesizing complete complex languages, several Domain Specific Languages (DSL) have emerged in recent years. DSLs are well known in the software domain: they allow programmers to express solutions at a higher abstraction level than typical Turing-complete languages, within the semantics of the particular application domain.
+\par In the context of HLS, DSLs have several other advantages. The limited syntactical constructs are more easily synthesizable; in other words, it is far simpler to ensure complete language coverage. Knowledge of the application domain allows the use of hardware templates optimized for the domain: rather than generic hardware structures designed for flexibility, the HLS tool is free to infer specialized architectures, optimized for power, performance and area within the domain (e.g., in synchronous dataflow DSL synthesis, the HLS compiler is aware of the timing relationships between modules and can infer pipeline stages separated by registers; in asynchronous dataflow, the HLS compiler is forced to infer FIFOs between modules).
+\par Darkroom \cite{hegarty2014darkroom} is language and compiler for image processing. Its semantics allow it to synthesize line-buffered pipelines, with all intermediate values in local line-buffer storage. Images at each stage of computation are specified as pure functions from 2D coordinates to the values at those coordinates, declared using a lambda-like syntax. In the first version, it only supports programs that are straight pipelines with one input, one output, and a single consumer of each intermediate. HIPA$^{cc}$ \cite{7017495} (Heterogeneous Image Processing Acceleratio) is another DSL for image processing. It is a C++ embedded DSL \cite{cuadrado2007building}, which uses the LLVM backend \cite{lattner2004llvm} for software code generation, and C code annotated with pragmas for Vivado HLS.
+\par RVC-CAL \cite{wipliez2011software} is an asynchronous dataflow language which possesses backends for FPGA, e.g., Xronos \cite{bezati2013high}. RVC-CAL is based on dataflow process networks with the addition of firing rules. Xronos uses Orcc compiler \cite{yviquel2013orcc} as its front-end, which parses RVC-CAL actors and generates and intermediate representation suited to its OpenForge backend. Another streaming DSL is Optimus \cite{hormati2008optimus}, based on the StreamIt language \cite{thies2002streamit}. A common feature of both languages is that embedded memories are used to implement local arrays and other data structures used by the filters. Thus, for large stream graphs, embedded memories quickly become the bottleneck resource.
+\par Spiral \cite{puschel2005spiral} is a code generation system for Digital signal Processing (DSP) transforms which has been extended to generate DSP IP cores for FPGA \cite{d2007generating}.
+
+
+
+\subsection{New Generation Hardware Description Languages}
+Three new generation HDLs are particularly relevant: Bluespec \cite{nikhil2004bluespec}, Chisel \cite{bachrach2012chisel} and Cx \cite{Cx_page}.
+\par Bluespec extends system Verilog to provide a higher level of abstraction. Interfaces are a core construct of Bluespec. Interfaces group signals according to methods, which define the semantics of access to a signal and can be used to parameterize modules upon instantiation. Rather than ''always" or ''process" constructs familiar to Verilog/VHDL designers, Bluespec defines behavior through rules (i.e., guarded actions) which specify how data are moved from state to state. 
+\par Chisel is an HDL embedded in the Scala language which supports multiple design paradigms, including object orientation,
+functional programming, parameterized types, and type inference. Two notable features are the capability to specify composite types (i.e., C-like \textit{structs}) and automatic inference of bit-widths, unlike strict bit-width definitions in legacy HDLs.
+OO-like inheritance allows modules to be re-used in the definition of higher-order modules without the messy sub-module instantiation (and corresponding ''rats nest" wiring). Computations can be expressed in functional-friendly constructs such as \textit{map} and \textit{fold} and the expressive generator systems simplifies the re-use of parameterizable modules.
+\par Cx offers a highly structured syntax with strong bit-accurate static typing. A Cx design is described as a set of sequential tasks connected together and executed concurrently, where dependency injection and inheritance can be applied to tasks. The Cx compiler generates human readable Verilog/VHDL code or C code for verification. Cx systems are described as Kahn Process Networks \cite{edwards2000kahn} where connections are inferred by discrete non-interruptible execution rules. Unlike legacy HDLs, clocks are not explicitly declared within code, but language semantics strictly specify the timing behavior of language constructs, providing cycle aware design much like VHDL and Verilog. 
+\par Bluespec, Chisel and Cx are greatly superior to legacy HDLs. Software concepts such as inheritance and type composition have found the way to HDLs, reducing the semantic gap between concept and implementation. Rather than leveraging existing software languages for FPGA synthesis (with the associated semantic problems), new generations HDL incorporated high-level language concepts in languages fine-tuned for hardware design. However, these new generation HDLs are still far from producing the type of disruptive innovations expected from HLs, primarily due to three reasons:
+
+\begin{itemize}
+	\item They follow the same design principle as decades-old legacy HDLs: FPGAs as a self contained entity. This contrasts the approach offered by FPGA vendors, who provide software suites that allow design at board, rather than chip, level. These suites are made up of several stacks which, through a complex design process involving constraint files, IP libraries, proprietary buses, etc, generate FPGA designs incorporating peripheral devices access and software interaction. It would be expected of new generation HDLs to incorporate more complex constructs, modeling off-chip interfaces within the semantics.
+	\item They do not incorporate the Von Neumann notion of memory. A substantial portion of state of the art FPGA systems incorporate external memory to accommodate data requirements. On new generation HDLs, this must be handled as in legacy HDLs: the programmer is responsible for interfacing with memory and managing data transmission to and from, burdening them with implementation details independent of the top level computation. It would be expected of new generation HDLs to model memory transparently (e.g., by specifying memory-allocated data as a built-in type) and generate hardware to transfer to and from memory seamlessly, through an on-chip hierarchy (physical constraints such as which FPGA pins are connected to memory can be resolved at linking stage, prior to synthesis).  
+	\item There are no semantic considerations for software interface. With the rise of the platform FPGA, it would be expected that new generation HDLs would borrow concepts from research in hardware-software interface research (e.g., PushPush \cite{7294024}) in order to provide semantic mechanisms for incorporating typed functions for bi-directional interaction with software objects. 
+\end{itemize}
+
+
+
+\subsection{Expressiveness}
+	
+HLS languages semantics limit which circuit functionalities can be expressed efficiently, or at all. A notorious example is the inference of tri-state buffers. Many HLS languages generate tri-state buffers within their HDL output for connecting functional elements; i.e., they are explictly stated in the HLS compiler HDL template. E.g., a HLS toolchain can instantiate functions as hardware accelerators, accessed through a common bus (LegUp \cite{canis2011legup}) uses the Avalon bus \cite{avalon} which implements a point to point, rather than shared, interconnect, implemented with multiplexers rather than tri-state buffers). Infering tri-state buses from user logic, however, is non-trivial. Implementations where several modules must communicate in a master-slave fashion, which hardware designers would naturally implement through shared buses implemented through tri-state logic, will result in several point to point connections in a naive HLS implementation.
+\par In imperative HLS, inputs and outputs are derived from function arguments (inputs) and function return value (outputs); both are intrinsically uni-directional. Infering tri-state buffers would require compiler directives on function declaration, extensive knowledge of the underlying HDL code generation to identify bus sharing opportunities (breaking the abstraction layer offered by HLS) and compiler optimizations to infer timing semantics for shared bus access. HLS semantics could perhaps specify shared memory, accessed through pointers and controlled through familiar software constructs such as mutexes and semaphores, to infer tri-state based buses and generate more area-efficient systems.
+\par In functional HLS, \rscomment{Rob?} 
+\par Tri-state buffers are a good example of a hardware feature that cannot be easily expressed by HLS language semantics. The opposite aspect is perhaps more researched: language semantics that cannot be (easily) synthesized to hardware. In imperative languages, all non-synthesizable constructs boil down to the same reason: memory. Imperative languages assume the Von Neumann model, which is not true on FPGAs. When functions are compiled to hardware modules, with arguments and return values specifying inputs/outputs, all local data are instantiated as wires, registers or embedded memory blocks: all encapsulated in the module. Global variables break this paradigm; they can only be resolved by instantiating logic/storage at a higher hierarchical level and adding connections between all modules that use them (meaning that modules' inputs/outputs no longer match function header). Further challenges arise in routing, if this data are shared by several modules, possibly decreasing clock frequencies, and in scheduling: while in (single-thread) software there is a strict sequential ordering of operations, this is not true in FPGA implementations. Either the HLS compiler extracts timing behavior from code analysis and places appropriate mechanisms on the hardware scheduler to preserve behavior, or it must force the use of mutexes/semaphores to control access (and generate equivalent hardware). The problems with pointers derive from the same aspects, whether they point to global variables or to local variables within other functions.
+\par Recursion is again hindered by the lack of memory, namely the implicit stack. Frame pointers and stack pointers used by the C runtime to manage function activation records make no sense in an FPGA implementation without a program counter. A function cannot call another instance of itself, since data are placed in physical locations, not in an addressable memory. Runtime polimorphism (even if implemented through a low-level mechanism such as C function pointers) cannot be accomplished when modules are connected point to point: it would require a bus or Network-on-Chip (NoC) scheme, where each module can be addressed (i.e., implementing the hardware equivalent of a typed procedure call).
+
+\par In functional HLS, \rscomment{Rob: recursive functions are a hot topic, and monads as well}
+
+
+	
+\subsubsection{Hierarchy and Modularity}
+
+Hierarchy is one of the foundations of hardware design. Hardware designers develope small modules which are re-used, integrated and composed (with no small ammount of ''glue logic") to create complex circuits. There are three main advantages in hierarchy: \textit{ease of verification}, \textit{algorithm decomposition} and \textit{implicit parallelism}. Small modules can be debugged and verified easily; when integrated into a higher-order module, functionality can be trusted, simplifying the verification of added logic. The algorithm to be implemented can be decomposed into several more atomic components, each implemented individually, minimizing the cognitive effort. Composing a higher-order module from several lower-level ones, each operating in parallel, enforces highly efficient designs not constrained by sequential operations, when possible. Legacy HDLs offer several constructs supporting hierarchy, such as parameterizable sub-module instantiation.
+\par However, hierarchy involves its own set of challenges. Managing code becomes more difficult: deeply nested modules are often connected to ones further up the hierarchy. This means that wires traverse several hierarchical levels, often across multiple source files. Any modification (e.g., adding a new signal) must be applied to all levels (typically referred to as ''rats nest" wiring problem). There is no semantic information apart from directionality (input or output) and bit width: particularly, there is absolutely no information about timing validity. New generation HDLs tackle this problem: in Bluespec, data signals are accompanied by ''ready" and ''enable" lines, adding semantic information to module interfaces.
+\par In the HLS domain, language semantics dictate how hierarchy is established. In imperative languages such as C, hardware synthesis is typically performed at function granularity. Functions that call other functions are result in modules which are hierarchically composed by the modules generated from the called functions, thus maintaining the ease of verification and algorithm decomposition capabilities offered by HDLs. However, parallelism is not implicit, since language semantics are not parallel. Native semantics dictate that one sub-function will operate, pass the result to the top-level function, and the second sub-function will then operate, even if computations are independent. Parallelism can be achieved, either through compiler transformations, performing dependency analysis and scheduling optimizations, or through explicit compiler directives which guide the parallelization process. Neither is simple: either the synthesis process is complicated by extensive analysis, or more responsabilities are placed on the programmer, which must refactor their code to incorporate toolchain-specific pragmas (hindering the familiarity aspect of HLS and breaking standard language semantics).
+\par Functional HLS languages do a much better job at composing circuits, since hierarchy is implicit in language semantics and there is no strict sequential behavior. Again, each function is mapped to a module. Function composition and higher-order functions (i.e., which take functions as arguments) creates a clean hierarchy of modules, where the functional paradigm lends itself very well to analyse data dependencies and extract parallelism; familiar concepts to functional programmers, who advocate the use of \textit{map} and \textit{fold} operators rather than loop constructs.  
+
+
+\subsubsection{I/O Interfaces}
+
+In the software world, the majority of programmers need not concern themselves with the target architecture (exceptions are embedded programmers who must interact directly with hardware). Software is developed in the same way for ARM, IA64 or PowerPC: the compiler toolchain handles appropriate assembly code generation and linking. This is not true for FPGAs. The equivalent of assembly code generation, generating configuration bistream files, is handled by the synthesis tool. But linking, which for software connects applications with initialization/bootstrap code, static and dynamic libraries, is manually performed by hardware designers in function of specific FPGAs (mapping system input/output ports to FPGA pins) and off-chip connections. This part of the design process limits the usage of many HLS toolchains by programmers lacking FPGA expertise, since low-level constraints requiring knowledge of place-and-route tools must be manually specified. HLS toolchains are limited to the FPGA boundaries.
+\par With the rise of the platform FPGA, more and more designs will incorporate software running on off-chip processors and accesses to external memories and other peripheral devices. One of the greatest HLS breakthroughs will be automated porting across different FPGA families and boards. FPGA designs will be synthesized like the Linux kernel: specifying an architecture and board through configuration options prior to compilation. Linkers will automatically inject interconnection logic in the design, map system ports to FPGA pins, generate constraint files and invoke place-and-route tools.  
+\par It is still a utopic view, far from the current capabilities of HLS toolchains. But we are inexorably moving towards that goal. Perhaps by utilizing \textit{intermediate fabrics} for runtime reconfiguration \cite{coole2010intermediate} or by introducing semantic information to HDL code which allows automatic I/O mapping through typed interfaces \cite{7294024}. Until then, programmers will be limited to vendor-specific ''plug-and-play" platforms or require FPGA-fluent engineers to manage the low level details of generated HLS code. 
+
+\subsection{Hardware-Software Interactions}
+\par In light of the popularity of platform FPGAs, hardware-software interactions deserve particular attention. The most basic approach is to manually ''patch" software, replacing function calls with instructions for hardware access (which can be either dedicated instructions, added to a soft processor instruction set, or memory-mapped accesses, depending on how bespoke hardware is connected). More recently, FPGA vendors have partially automated software-hardware interactions (e.g., Xilinx toolchain allows adding AXI-compliant IP blocks to a design and facilitate generating software for interaction, even device drivers for Linux). Projects such as LegUp \cite{canis2011legup}, which (semi)automatically profile a software application running on a soft MIPS processor and generate hardware, at function granularity from C source code, connect hardware accelerators through a dedicated Avalon bus and patch software to access them. Both approaches, followed by many other HLS toolchains, treat software as a first class citizen and hardware as second class; i.e., software controls the execution flow and can utilize hardware accelerators whenever it sees fit, an approach commonly referref to as \textit{vertical integration}. \textit{Data transport layers} enhance the semantics of interoperability by providing bi-directional channels between hardware and software: examples are Xillybus \cite{Xilly}, LEAP \cite{adler2011leap} and RIFFA \cite{jacobsen2015riffa}. Although more powerful and flexible than vertical integration approaches, these technologies still require explicit function linking by the programmer. A more sophisticated technology is PushPush, which exposes component functionality (where a component can be hardware or software) as  strongly  typed functions, and allows any component to access functions exposed by any other in the system \cite{7294024}, allowing hardware blocks to invoke software functionalities seamlessly; linking is performed automatically, either at system integration or runtime, implementing \textit{horizontal integration}.
+
