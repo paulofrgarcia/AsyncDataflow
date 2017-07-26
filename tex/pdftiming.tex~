@@ -8,14 +8,14 @@ As previously mentioned, the timing analysis of synchronous dataflow is predicat
 \begin{figure}[tb]
   \centering
   \includegraphics[width=1\columnwidth]{img/example1.png}
-  \caption{Accumulated energy consumption for the baseline (no approximation) and dynamic approximations, with three different KL divergence thresholds.}
+  \caption{Profile update after action firing: token consumption is updated by incrementing bin 2, token production is updated by incrementing bin 1, and latency is is updated by incrementing bin 1.}
   \label{fig:example1}
 \end{figure}
 
 
 
 
-For the simplest possible dynamic asynchronous actor, with one input and one output port, we monitor each action firing, how many tokens are consumed and produced, and how long it takes between token consumption and production (i.e., action latency). Fig. \ref{fig:example1} depicts an example of such profiling, for different token throughput and action latencies, and examples of PDFs for each metric.
+For the simplest possible dynamic asynchronous actor, with one input and one output port, we monitor how many tokens are consumed and produced per action firing, and how long it takes between successive action firings, assuming sufficient input tokens are always available. It should be noted that we assume these two metrics to be independent: the dynamic nature of actors doen't allow for any assumptions of correlation between token consumption and latency. Fig. \ref{fig:example1} depicts an example of such profiling, for different token throughput and action latencies, and examples of histograms for each metric.
 
 
 
