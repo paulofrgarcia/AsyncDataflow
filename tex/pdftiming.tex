@@ -16,7 +16,11 @@ As previously mentioned, the timing analysis of synchronous dataflow is predicat
 
 
 For the simplest possible dynamic asynchronous actor, with one input and one output port, we monitor how many tokens are consumed and produced per action firing, and how long it takes between successive action firings, assuming sufficient input tokens are always available. It should be noted that we assume these two metrics to be independent: the dynamic nature of actors doen't allow for any assumptions of correlation between token consumption and latency. Fig. \ref{fig:example1} depicts an example of such profiling, for different token throughput and action latencies, and examples of histograms for each metric.
+\par A simplistic analysis of actor behaviour would be the average time between token consumption. We can define that one token is consumed every $t_T$ seconds, where:
 
+\begin{equation}
+t_T = \frac{\sum_{0}^{n_T} H(T)}{\sum_{0}^{n_L} H(L)} 
+\end{equation}
 
 
 \par In order to model actors' behaviour in absolute continuous time, 
