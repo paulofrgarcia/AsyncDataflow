@@ -17,14 +17,6 @@
 \usepackage{tikz}
 \usetikzlibrary{positioning}
 
-\makeatletter
-\renewcommand*\env@matrix[1][*\c@MaxMatrixCols c]{%
-  \hskip -\arraycolsep
-  \let\@ifnextchar\new@ifnextchar
-  \array{#1}}
-\makeatother
-
-
 \newcommand{\pgcomment}[1]{ \par\( \clubsuit\){\bf PG: }{\rm \sf #1}\(\clubsuit\) \par}
 \newcommand{\rscomment}[1]{ \par\( \clubsuit\){\bf RS: }{\rm \sf #1}\(\clubsuit\) \par}
 
