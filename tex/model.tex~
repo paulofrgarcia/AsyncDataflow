@@ -93,50 +93,81 @@ Single port feed forward networks are the simplest type of dataflow networks. In
 \begin{equation}
 \textbf{A}_{\textbf{p}}=
 \begin{pmatrix}
-  1 & 0 & 0 & \cdots & 0 \\
-  0 & a_{1} & 0& \cdots & 0 \\
-  0 & 0 & a_{2} & \cdots & 0 \\
-  \vdots  & \vdots  & \vdots & \ddots & \vdots  \\
-  0 & 0 & 0& \cdots & a_{m} 
+   a_{1} & 0& \cdots & 0 \\
+   0 & a_{2} & \cdots & 0 \\
+   \vdots  & \vdots & \ddots & \vdots  \\
+   0 & 0& \cdots & a_{m} 
  \end{pmatrix}
 ,
 \textbf{A}_{\textbf{c}}=
 \begin{pmatrix}
-  a_{1} & 0 & 0 & \cdots & 0 \\
-  0 & a_{2} & 0& \cdots & 0 \\
-  0 & 0 & a_{3} & \cdots & 0 \\
-  \vdots  & \vdots  & \vdots & \ddots & \vdots  \\
-  0 & 0 & 0& \cdots & 1 
+   a_{2} & 0& \cdots & 0 \\
+   0 & a_{3} & \cdots & 0 \\
+   \vdots  & \vdots & \ddots & \vdots  \\
+   0 & 0& \cdots & 1 
  \end{pmatrix}
 \end{equation} 
 
-These matrices are characterised by having $\textbf{A}_{\textbf{p1,1}}=1$, $\textbf{A}_{\textbf{cm,m}}=1$ and no repeated actor mapping elements. 
+These matrices are characterised by having $\textbf{A}_{\textbf{p1,1}}=1$, $\textbf{A}_{\textbf{cm,m}}=1$ and no repeated actor mapping elements. Additionally, it is possible to name actors in such a way that actor mapping elements are ordered in both matrices (this is not possible in networks with feedback). The linear system solution for single port feed forward networks results in:
+
+\begin{equation}
+ \begin{cases} 
+ p_1a_1=u_1c_1 a_2 \\
+p_2 a_2=u_2 c_2 a_3 \\
+\vdots \\
+p_m a_m=u_m  c_m
+\end{cases}
+\label{eq:solvable}
+\end{equation}
+
+or, in augmented matrix form:
+
+\begin{equation}
+\begin{pmatrix}[cccc|c]
+  p_1 & -u_1c_1 & 0 & \hdots & 0   \\
+  0 & p_2 & -u_2c_2 & \hdots  &0  \\
+  \vdots & \vdots &  \vdots & \ddots & \vdots \\
+  0 & 0 & 0 & p_m & u_mc_m  
+ \end{pmatrix}
+\end{equation}
+
+Since both the coefficient and augmented matrices have rank $m$ (the number of free variables), the system has a unique solution for any values of $\textbf{U'}$: hence, it is always possible to set all queue utilisations to 1 and determine actor execution ratios.
+ 
 
 \subsubsection{Divergent feed forward}
 
-In divergent feed forward networks, each actor has only one input port, but may have several output ports, resulting in networks that diverge into two or more independent networks: hence, the full network has one input and several outputs, resulting in the classification matrices:
+In divergent feed forward networks, each actor has only one input port, but may have several output ports, resulting in networks that diverge into two or more independent paths: hence, the full network has one input and several outputs, resulting in the classification matrices:
 
 \begin{equation}
 \textbf{A}_{\textbf{p}}=
 \begin{pmatrix}
-  1 & 0 & 0 & \cdots & 0 \\
-  0 & a_{\textbf{1}} & 0& \cdots & 0 \\
-  0 & 0 & a_{\textbf{1}} & \cdots & 0 \\
-  \vdots  & \vdots  & \vdots & \ddots & \vdots  \\
-  0 & 0 & 0& \cdots & a_{m} 
+   a_{\textbf{1}} & 0& \cdots & 0 \\
+   0 & a_{\textbf{1}} & \cdots & 0 \\
+   \vdots  & \vdots & \ddots & \vdots  \\
+   0 & 0& \cdots & a_{m} 
  \end{pmatrix}
 ,
 \textbf{A}_{\textbf{c}}=
 \begin{pmatrix}
-  a_{1} & 0 & 0 & \cdots & 0 \\
-  0 & a_{2} & 0& \cdots & 0 \\
-  0 & 0 & a_{3} & \cdots & 0 \\
-  \vdots  & \vdots  & \vdots & \textbf{1} & \vdots  \\
-  0 & 0 & 0& \cdots & \textbf{1} 
+   a_{2} & 0& \cdots & 0 \\
+   0 & \ddots & \cdots & 0 \\
+   \vdots  & \vdots & \textbf{1} & \vdots  \\
+   0 & 0& \cdots & \textbf{1} 
  \end{pmatrix}
 \end{equation} 
 
 These matrices are characterised by having repeated elements in $\textbf{A}_{\textbf{p}}$, and the same number of 1s in $\textbf{A}_{\textbf{c}}$ as the number of repetitions in $\textbf{A}_{\textbf{p}}$.
+\par There is no assurance that these types of networks have a solution: however, it is still possible to infer knowledge about the network and optimise it, even when the system is not solvable. In order to do that, we divide the network into $k$ paths, where $k$ is the number of repetitions in $\textbf{A}_{\textbf{p}}$; each path corresponds to a single port feed forward network. Then, actor execution ratios are calculated by solving the system. This results in three possible cases:
+
+\begin{enumerate}
+\item Results for actor execution ratios are consistent across all $k$ paths. In this case, there is a single solution that optimises the network.
+\item Results for actor execution ratios are not consistent across all $k$ paths, but all results are $\leq1$. In this case, it is possible to optimise the path with the highest ratio for the corresponding divergent actor, and update lower ratio paths accordingly (e.g., if path 1 results in $a_1=0.8$ and $a_2=1$, and path 2 results in $a_1=0.4$ and $a_3=0.2$, then the final ratios are $a_1=0.8$, $a_2=1$ and $a_3=0.2 \times \frac{0.8}{0.4} = 0.4$).
+\item Results for actor execution ratios are not consistent across all $k$ paths, applying the previous update technique yields at least one result $>1$. This means that 
+\end{enumerate}
+
+
+
+
 
 \subsubsection{Convergent feed forward}
 
@@ -183,8 +214,8 @@ Convergent/divergent feed forward networks exhibit the characteristics of both p
   a_{1} & 0 & 0 & \cdots & 0 \\
   0 & a_{\textbf{2}} & 0& \cdots & 0 \\
   0 & 0 & a_{\textbf{2}} & \cdots & 0 \\
-  \vdots  & \vdots  & \vdots & 1 & \vdots  \\
-  0 & 0 & 0& \cdots & 1 
+  \vdots  & \vdots  & \vdots & \textbf{1} & \vdots  \\
+  0 & 0 & 0& \cdots & \textbf{1} 
  \end{pmatrix}
 \end{equation} 
 
